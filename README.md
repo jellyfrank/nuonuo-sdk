@@ -98,6 +98,8 @@ python -m build
 ```
 
 离线测试使用合成数据，覆盖官方签名向量、实际发送字节、认证参数、金额精度、错误和防重复提交行为。
-GitHub Actions 配置 Python 3.10–3.14。没有提供诺诺测试凭据，**未完成真实沙箱／税局联调**。
+GitHub Actions 配置 Python 3.10–3.14。已用用户提供的历史测试配置请求沙箱，
+SDK 与官方示例均返回 `070601`（签名不匹配），**尚未通过沙箱业务联调**。
+详见 [沙箱联调记录](docs/sandbox-validation.md)。
 
 接口取证、文档版本和已知边界见 [docs/api-contract.md](docs/api-contract.md)。
