@@ -71,6 +71,7 @@ new_token_data = client.refresh_isv_token(refresh_token, user_id)
 | `client.invoice.redeliver(data)` | 100249 | 明确调用时向短信／邮箱重新交付 |
 | `client.invoice.issue_red(data)` | 101018 | 微信／支付宝联用蓝票的全额冲红 |
 | `client.nst.issue(order)` | 100607 | 诺税通 SaaS 请求开票 |
+| `client.nst.query(order_nos=[...], include_details=True)` | 专用测试账号实测 | 诺税通 SaaS 开票结果，1–50 个标识 |
 | `client.nst.list_invoices(data)` | 100595 | 诺税通 SaaS 发票列表 |
 | `client.call(method, data)` | 按实际接口 | 其他开放平台 API 通用入口 |
 
@@ -78,6 +79,14 @@ new_token_data = client.refresh_isv_token(refresh_token, user_id)
 
 诺税通 SaaS 开票要求对应产品资质与接口授权，`nst.issue` 接受 **order 内部字段**，自动包装成 `{"order": ...}`，不可重复嵌套。调用前保存 `orderNo`（每企业唯一）、完整请求及业务状态，按官方文档填写购销方、明细、`invoiceDate`、`invoiceType` 等字段。不提供可直接运行的真实开票样例，以免将演示数据提交为税票。
 `invoice.issue_red` 不是适用所有数电票的通用冲红入口；完整红字确认单流程不在本版业务封装内。
+
+## 下载票文件
+
+`from nuonuo.documents import download_document`，调用
+`download_document(url, allowed_hosts={"inv.jss.com.cn"}, kind="pdf")` 返回 `Document(name, mimetype, data)`。
+调用前校验查询结果中的订单、购销方、票种与金额，再使用接口返回的文件地址。
+允许域名由管理员确认，不从返回 URL 自动加入；仅 HTTPS、无重定向、单文件最多 10 MB，
+不携带应用凭据、netrc 凭据或继承代理配置。支持 PDF/OFD/XML；文件头检查不替代税票验真。
 
 ## 签名、错误与恢复
 
@@ -98,8 +107,10 @@ python -m build
 ```
 
 离线测试使用合成数据，覆盖官方签名向量、实际发送字节、认证参数、金额精度、错误和防重复提交行为。
-GitHub Actions 配置 Python 3.10–3.14。已用用户提供的历史测试配置请求沙箱，
-SDK 与官方示例均返回 `070601`（签名不匹配），**尚未通过沙箱业务联调**。
+GitHub Actions 配置 Python 3.10–3.14。2026-09-22 使用诺诺确认只产生测试数据的专用账号，
+已通过列表查询、单张数电普通蓝票提交、原订单结果查询和 PDF/OFD 下载。
+该测试账号使用正式网关；不能仅凭网关域名判定账号会否产生真实税票。
+历史 Juhui 沙箱配置的 `070601` 记录保留供排查，当前账号已通过验签及业务调用。
 详见 [沙箱联调记录](docs/sandbox-validation.md)。
 
 接口取证、文档版本和已知边界见 [docs/api-contract.md](docs/api-contract.md)。

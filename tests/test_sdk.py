@@ -180,3 +180,45 @@ def test_issue_requires_persistable_identity(client, order):
 def test_response_decimal_preserved(client):
     client._session.post.return_value._content = b'{"code":"E0000","result":{"amount":123.4567890123456789}}'
     assert client.invoice.pending()['result']['amount'] == Decimal('123.4567890123456789')
+
+
+def test_nst_query_namespace(client):
+    client.nst.query(order_nos=['persisted'], include_details=True)
+    kw = client._session.post.call_args.kwargs
+    assert kw['headers']['method'] == 'nuonuo.OpeMplatform.queryInvoiceResult'
+    assert json.loads(kw['data']) == {'orderNos': ['persisted'], 'isOfferInvoiceDetail': '1'}
+
+
+@pytest.mark.parametrize('kwargs', [{}, {'order_nos': 'a'}, {'order_nos': ['a'] * 51}, {'serial_nos': ['a'], 'order_nos': ['a']}])
+def test_nst_query_validation(client, kwargs):
+    with pytest.raises(ValueError):
+        client.nst.query(**kwargs)
+    client._session.post.assert_not_called()
+
+
+@pytest.mark.parametrize('url', ['http://files.example/a', 'https://evil.example/a', 'https://u:p@files.example/a', 'https://files.example:8443/a'])
+def test_document_host_guard(url):
+    from nuonuo.documents import download_document
+    with pytest.raises(ValueError):
+        download_document(url, allowed_hosts=['files.example'])
+
+
+def test_download_bounded_and_no_redirect(monkeypatch):
+    from nuonuo.documents import download_document
+    from unittest.mock import MagicMock
+    session = MagicMock()
+    monkeypatch.setattr('nuonuo.documents.requests.Session', lambda: session)
+    r = session.__enter__.return_value.get.return_value.__enter__.return_value
+    r.status_code = 200
+    r.iter_content.return_value = [b'%PDF-synthetic']
+    doc = download_document('https://files.example/a', allowed_hosts=['files.example'])
+    assert doc.data == b'%PDF-synthetic'
+    assert session.__enter__.return_value.trust_env is False
+    assert session.__enter__.return_value.get.call_args.kwargs['allow_redirects'] is False
+    r.status_code = 302
+    with pytest.raises(TransportError):
+        download_document('https://files.example/a', allowed_hosts=['files.example'])
+    r.status_code = 200
+    r.iter_content.return_value = [b'x' * (10 * 1024 * 1024 + 1)]
+    with pytest.raises(ProtocolError):
+        download_document('https://files.example/a', allowed_hosts=['files.example'])

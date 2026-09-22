@@ -62,3 +62,18 @@ class Nst:
     def list_invoices(self, data, *, senid=None):
         """100595: paginated invoice list; caller supplies official filter fields."""
         return self._client.call('nuonuo.OpeMplatform.queryInvoiceList', data, senid=senid)
+
+    def query(self, *, serial_nos=None, order_nos=None, include_details=False, senid=None):
+        """NST result lookup verified against the authorized test account.
+
+        The payload matches the invoice result query, but the product namespace differs.
+        """
+        if bool(serial_nos) == bool(order_nos):
+            raise ValueError('Provide either serial_nos or order_nos')
+        values = serial_nos if serial_nos else order_nos
+        if (not isinstance(values, (list, tuple)) or not 1 <= len(values) <= 50
+                or any(not isinstance(v, str) or not v.strip() for v in values)):
+            raise ValueError('Provide 1 to 50 non-empty string identifiers')
+        data = {'serialNos' if serial_nos else 'orderNos': list(values),
+                'isOfferInvoiceDetail': '1' if include_details else '0'}
+        return self._client.call('nuonuo.OpeMplatform.queryInvoiceResult', data, senid=senid)

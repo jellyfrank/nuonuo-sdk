@@ -40,5 +40,15 @@ ZIP SHA256: `09def6467fbec50f9770f4804409a1763da850228935ec9c868ea8f583f6a2b3`
 - 认证不是业务签名调用：表单提交 client_credentials／authorization_code／refresh_token；刷新的 client_id 必须是 userId。
 - 100607 属于诺税通 SaaS 产品；不把此方法伪装成普通诺诺发票直接开票。
 - 通用调用保留所有业务返回码；不假定 200 是所有发票接口的成功码。
-- 回调接收、验签、文件下载、所有进项接口及所有特殊票种业务校验未封装；可通过通用调用扩展官方授权接口。
-- 开发期间没有执行真实业务 API（开票、作废、冲红、查验、短信／邮件交付）。
+- 回调接收、验签、所有进项接口及所有特殊票种业务校验未封装；可通过通用调用扩展官方授权接口。
+- 2026-09-19 初版未执行业务写操作；后续专用测试账号联调见 sandbox-validation.md。
+
+## 2026-09-22 诺税通查询补充
+
+`client.nst.query` 使用 `nuonuo.OpeMplatform.queryInvoiceResult`，与普通
+`nuonuo.ElectronInvoice.queryInvoiceResult` 区分。方法名来自现有 Juhui 对接，
+本次专用测试账号已实测 `orderNos`、`isOfferInvoiceDetail="1"` 与最终状态 2 的完整返回。
+当前公开诺税通目录未找到该方法的独立文档 ID，不将 100188 误标为该方法文档。
+对接方须确认所属应用权限；保留未知状态，不把受理成功当作开票成功。
+
+新下载工具支持明确域名白名单、禁止重定向、大小限制和基本文件头校验。
