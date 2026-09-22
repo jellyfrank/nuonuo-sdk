@@ -6,10 +6,10 @@
 ## 安装与查询
 
 ```bash
-pip install 'git+ssh://git@github.com/jellyfrank/nuonuo-sdk.git@main'
+pip install nuonuo-sdk==0.2.0
 ```
 
-生产依赖建议固定已验证的完整提交 SHA；尚未发布 PyPI。
+生产依赖建议固定已验证版本。源码安装也可固定完整提交 SHA。
 
 ```python
 import os
